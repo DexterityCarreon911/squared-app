@@ -1,81 +1,109 @@
-import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, QrCode, Sparkles, Users, Shield } from "lucide-react"
-
-const features = [
-  { icon: QrCode, title: "QR Attendance", desc: "Seamless event attendance tracking with QR code scanning." },
-  { icon: Sparkles, title: "Activity Evaluation", desc: "Real-time feedback and evaluation forms for every event." },
-  { icon: Users, title: "Student Portal", desc: "Personal dashboard with attendance history and profiles." },
-  { icon: Shield, title: "Admin Control", desc: "Full management suite for students, events, and payments." },
-]
+import LandingNavbar from "@/pages/landing/LandingNavbar"
+import HeroSlider from "@/pages/landing/HeroSlider"
+import AboutSection from "@/pages/landing/AboutSection"
+import FoundersSection from "@/pages/landing/FoundersSection"
+import ProgramsSection from "@/pages/landing/ProgramsSection"
+import AvatarsSection from "@/pages/landing/AvatarsSection"
+import BeyondAttendanceSection from "@/pages/landing/BeyondAttendanceSection"
+import BlueprintSection from "@/pages/landing/BlueprintSection"
+import StudentCountsSection from "@/pages/landing/StudentCountsSection"
+import UpcomingEventsSection from "@/pages/landing/UpcomingEventsSection"
+import LandingFooter from "@/pages/landing/LandingFooter"
+import AnnouncementSection from "@/pages/landing/AnnouncementSection"
+import BackToTop from "@/components/BackToTop"
+import PwaInstallHandler from "@/components/PwaInstallHandler"
+import DarkModeStyles from "@/components/DarkModeStyles"
+import { useState, useEffect } from "react"
+import { useDarkMode } from "@/hooks/useDarkMode"
+import LandingModals from "@/pages/landing/LandingModals"
 
 export default function Landing() {
+  useDarkMode()
+
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showMessage, setShowMessage] = useState(false)
+  const [showAccountExists, setShowAccountExists] = useState(false)
+  const [showInstall, setShowInstall] = useState(false)
+  const [messageType, setMessageType] = useState<"success" | "error" | "warning">("success")
+  const [messageText, setMessageText] = useState("")
+  const [accountEmail, setAccountEmail] = useState("")
+
+  // URL parameter modal handling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const modal = params.get("modal")
+    const msg = params.get("message")
+
+    if (modal === "success" || modal === "danger" || modal === "warning") {
+      setMessageType(modal === "danger" ? "error" : modal)
+      setMessageText(decodeURIComponent(msg || "Operation successful."))
+      setShowMessage(true)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
+    if (params.has("account_exists")) {
+      const email = params.get("email")
+      if (email) setAccountEmail(email)
+      setShowAccountExists(true)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/images/Squared_Logo.png" alt="Squared" className="h-8 w-8" />
-            <span className="text-xl font-bold text-[#187C19]">Squared</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" asChild>
-              <Link to="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/register">Register</Link>
-            </Button>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-white font-['Nunito',system-ui,sans-serif]">
+      <LandingNavbar />
 
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 py-20 md:py-32">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-green-100 text-[#187C19] px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" /> Smart Attendance System
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-            Streamline Your{" "}
-            <span className="text-[#187C19]">School Events</span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            QR-based attendance tracking, real-time evaluations, and student management — all in one platform.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Button size="xl" asChild>
-              <Link to="/register">Get Started <ArrowRight className="w-5 h-5 ml-2" /></Link>
-            </Button>
-            <Button size="xl" variant="outline" asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {/* Offset for fixed navbar */}
+      <div className="pt-16">
+        <HeroSlider />
+        <StudentCountsSection />
+        <AboutSection />
+        <BeyondAttendanceSection />
+        <BlueprintSection />
+        <ProgramsSection />
+        <FoundersSection />
+        <AvatarsSection />
 
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Everything you need</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feat) => (
-            <div key={feat.title} className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <feat.icon className="w-6 h-6 text-[#187C19]" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{feat.title}</h3>
-              <p className="text-gray-600 text-sm">{feat.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        {/* Squared overview image */}
+        <img
+          src="/images/Squared.png"
+          alt="Squared QR Attendance System Overview"
+          className="w-full h-auto mt-4"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+        />
 
-      {/* Footer */}
-      <footer className="border-t bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-          <p>© 2026 Squared. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+        <AnnouncementSection />
+        <UpcomingEventsSection />
+      </div>
+
+      <LandingFooter />
+      <BackToTop />
+
+      {/* Modals */}
+      <LandingModals
+        showLogin={showLogin}
+        showRegister={showRegister}
+        showMessage={showMessage}
+        showAccountExists={showAccountExists}
+        showInstall={showInstall}
+        messageType={messageType}
+        messageText={messageText}
+        accountEmail={accountEmail}
+        onCloseLogin={() => setShowLogin(false)}
+        onCloseRegister={() => setShowRegister(false)}
+        onCloseMessage={() => setShowMessage(false)}
+        onCloseAccountExists={() => setShowAccountExists(false)}
+        onCloseInstall={() => setShowInstall(false)}
+        onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true) }}
+        onSwitchToLogin={() => { setShowRegister(false); setShowLogin(true) }}
+      />
+
+      {/* PWA Install Prompt */}
+      <PwaInstallHandler onShowInstall={() => setShowInstall(true)} />
+
+      {/* Dark Mode Styles — injected via ref to avoid TSX parser conflicts with CSS curly braces */}
+      <DarkModeStyles />
+      </div>
   )
 }

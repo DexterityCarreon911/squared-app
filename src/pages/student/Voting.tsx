@@ -69,7 +69,7 @@ export default function Voting() {
       const data = await res.json()
       if (data.status === "success") {
         setSuccess("Vote cast successfully!")
-        setSelectedCandidates((prev) => ({ ...prev, [electionId]: undefined }))
+        setSelectedCandidates((prev) => { const next = { ...prev }; delete next[electionId]; return next })
         // Refresh
         const refresh = await fetch("/php/get_elections.php", { credentials: "include" })
         const refreshData = await refresh.json()

@@ -1,9 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Lock, User, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { LogIn, Eye, EyeOff, CheckCircle, AlertCircle, UserCheck } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -15,6 +12,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   const registered = searchParams.get("registered")
+  const existingAccount = searchParams.get("existing_account")
+  const existingId = searchParams.get("existing_id")
+  const existingEmail = searchParams.get("email")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,7 +35,7 @@ export default function Login() {
         body: new URLSearchParams({
           student_id: studentId,
           password: password,
-          csrf_token: "", // Will need to fetch CSRF token first
+          csrf_token: "",
         }),
       })
       const data = await response.json()
@@ -44,90 +44,166 @@ export default function Login() {
       } else {
         setError(data.message || "Invalid credentials.")
       }
-    } catch (err) {
+    } catch {
       setError("Connection error. Please try again.")
     }
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <img src="/images/Squared_Logo.png" alt="Squared" className="h-10 w-10" />
-            <span className="text-2xl font-bold text-[#187C19]">Squared</span>
+    <div className="bg-[#fafafa] min-h-screen flex flex-col">
+      {/* Navbar */}
+      <nav className="bg-[#187C19] text-white py-3 px-6 shadow-md">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <img src="/images/Squared_Logo.png" alt="Logo" className="w-8 h-8 rounded bg-white p-1" />
+            Squared
           </Link>
-          <p className="text-gray-500 mt-2">Sign in to your account</p>
+          <div className="flex gap-4 items-center">
+            <Link to="/login" className="text-sm font-medium hover:opacity-80 transition-opacity">
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="bg-[#FFAB40] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-opacity"
+            >
+              Register
+            </Link>
+          </div>
         </div>
+      </nav>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader>
-            <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Enter your Student ID and password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {registered && (
-              <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 text-sm mb-4">
-                Registration successful! Please sign in.
-              </div>
-            )}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-sm mb-4 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Student ID</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    className="pl-10"
-                    placeholder="Enter your Student ID"
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    className="pl-10 pr-10"
-                    type={showPw ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center space-y-2">
-              <Link to="/forgot-password" className="text-sm text-[#187C19] hover:underline block">
-                Forgot your password?
-              </Link>
-              <p className="text-sm text-gray-500">
-                Don't have an account?{" "}
-                <Link to="/register" className="text-[#187C19] hover:underline font-medium">
-                  Register here
-                </Link>
-              </p>
+      {/* Main Content */}
+      <main className="flex-grow flex items-center justify-center p-4">
+        <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-xl border border-neutral-100 p-8 space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <div className="flex justify-center mb-4">
+              <img src="/images/Squared_Logo.png" alt="Squared" className="w-16 h-16 object-contain" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Welcome Back</h1>
+            <p className="text-neutral-500 text-sm italic">Sign in to your Squared account</p>
+          </div>
+
+          {/* Success Message */}
+          {registered && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-bold">Registration Successful!</p>
+                <p className="text-xs opacity-90">Please sign in with your new credentials.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Account Already Exists */}
+          {existingAccount && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-4 rounded-xl flex items-start gap-3">
+              <div className="bg-amber-100 rounded-full p-2 flex-shrink-0">
+                <UserCheck className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">Account Already Exists!</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  An account with email{" "}
+                  <span className="font-medium">{existingEmail || ""}</span> is already registered.
+                </p>
+                <div className="mt-3 pt-3 border-t border-amber-200">
+                  <p className="text-xs text-amber-600 mb-2">Please sign in to your existing account:</p>
+                  <Link to="/forgot-password" className="text-xs text-[#187C19] hover:underline font-medium">
+                    Forgot your password? Reset it here
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Student ID Already Registered */}
+          {existingId && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-bold">Student ID Already Registered!</p>
+                <p className="text-xs opacity-90">
+                  This ID is already in our system. Please login or contact support.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="studentId" className="text-sm font-medium leading-none">
+                Student ID
+              </label>
+              <input
+                id="studentId"
+                type="text"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                placeholder="Student ID"
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#187C19] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label htmlFor="password" className="text-sm font-medium leading-none">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-xs text-[#187C19] hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#187C19] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-xs text-red-500 font-medium text-center">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full inline-flex items-center justify-center rounded-lg bg-[#187C19] px-4 py-2 text-sm font-semibold text-white shadow transition-all hover:bg-[#136a14] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#187C19] focus-visible:ring-offset-2 gap-2 disabled:opacity-50"
+            >
+              <LogIn className="w-4 h-4" />
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          <div className="text-center">
+            <p className="text-sm text-neutral-500">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-[#187C19] font-bold hover:underline">
+                Register here
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <footer className="p-6 text-center text-xs text-neutral-400">
+        &copy; {new Date().getFullYear()} SQUARED. ALL RIGHTS RESERVED.
+      </footer>
     </div>
   )
 }

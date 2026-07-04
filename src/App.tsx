@@ -17,6 +17,11 @@ import ConfessionsWall from "@/pages/student/Confessions"
 import Voting from "@/pages/student/Voting"
 import Payments from "@/pages/student/Payments"
 import QRQuest from "@/pages/student/QRQuest"
+import QRCard from "@/pages/student/QRCard"
+import AttendanceRecord from "@/pages/student/AttendanceRecord"
+import Notifications from "@/pages/student/Notifications"
+import ScanForm from "@/pages/student/ScanForm"
+import GenerateQR from "@/pages/student/GenerateQR"
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard"
@@ -28,6 +33,11 @@ import AdminScanner from "@/pages/admin/Scanner"
 import AdminPayments from "@/pages/admin/Payments"
 import AdminSupport from "@/pages/admin/Support"
 import AdminLogin from "@/pages/admin/Login"
+import AdminSlider from "@/pages/admin/Slider"
+import AdminVotingManagement from "@/pages/admin/VotingManagement"
+import AdminEvaluations from "@/pages/admin/Evaluations"
+import AdminQRQuestManagement from "@/pages/admin/QRQuestManagement"
+import AdminSettings from "@/pages/admin/Settings"
 
 function ProtectedStudent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -81,6 +91,56 @@ function AppRoutes() {
         <Route index element={<Attendance />} />
       </Route>
       <Route
+        path="/qr-card"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<QRCard />} />
+      </Route>
+      <Route
+        path="/attendance-record"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<AttendanceRecord />} />
+      </Route>
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<Notifications />} />
+      </Route>
+      <Route
+        path="/scan-form"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<ScanForm />} />
+      </Route>
+      <Route
+        path="/generate-qr"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<GenerateQR />} />
+      </Route>
+      <Route
         path="/confessions"
         element={
           <ProtectedStudent>
@@ -101,16 +161,6 @@ function AppRoutes() {
         <Route index element={<Voting />} />
       </Route>
       <Route
-        path="/payments"
-        element={
-          <ProtectedStudent>
-            <StudentLayout />
-          </ProtectedStudent>
-        }
-      >
-        <Route index element={<Payments />} />
-      </Route>
-      <Route
         path="/qr-quest"
         element={
           <ProtectedStudent>
@@ -119,6 +169,16 @@ function AppRoutes() {
         }
       >
         <Route index element={<QRQuest />} />
+      </Route>
+      <Route
+        path="/payments"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<Payments />} />
       </Route>
 
       {/* Admin Routes (wrapped in AdminLayout) */}
@@ -201,6 +261,58 @@ function AppRoutes() {
         }
       >
         <Route index element={<AdminSupport />} />
+      </Route>
+
+      {/* New Admin Routes */}
+      <Route
+        path="/admin/slider"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminSlider />} />
+      </Route>
+      <Route
+        path="/admin/voting"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminVotingManagement />} />
+      </Route>
+      <Route
+        path="/admin/evaluations"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminEvaluations />} />
+      </Route>
+      <Route
+        path="/admin/qr-quest"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminQRQuestManagement />} />
+      </Route>
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminSettings />} />
       </Route>
 
       {/* 404 */}
