@@ -1,38 +1,78 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Wallet, CreditCard, Sparkles, Download } from "lucide-react"
+import { Wallet, CreditCard, Sparkles } from "lucide-react"
+import ErrorState from "@/components/ErrorState"
+import LoadingState from "@/components/LoadingState"
 
 interface Payment {
-  id: number
+  payment_id: number
   description: string
   amount: number
   status: string
-  due_date: string
+  academic_year: string
+  semester: string
   paid_at: string
+  receipt_number: string | null
 }
 
 export default function Payments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const res = await fetch("/php/get_payments.php", {
-          credentials: "include",
-        })
-        const data = await res.json()
-        if (data.status === "success") {
-          setPayments(data.payments || [])
-        }
-      } catch (err) {
-        console.error("Failed to fetch payments", err)
+  const fetchPayments = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/php/get_payment_status.php", { credentials: "include" })
+      if (!res.ok) throw new Error("Could not load payment history.")
+
+      const data = await res.json()
+      if (data.status !== "success" || !Array.isArray(data.payment_history)) {
+        throw new Error(data.message || "Could not load payment history.")
       }
+
+      const eventNames = new Map<string, string>(
+        (Array.isArray(data.events) ? data.events : []).map(
+          (event: { slug: string; event_name: string }): [string, string] => [
+            event.slug,
+            event.event_name,
+          ]
+        )
+      )
+      if (data.aurora_night?.event_name) {
+        eventNames.set("aurora_night_2026", data.aurora_night.event_name)
+      }
+
+      setPayments(data.payment_history.map((payment: {
+        payment_id: number
+        amount: number
+        status: string
+        fee_type: string
+        academic_year: string
+        semester: string
+        processed_at: string | null
+        receipt: { receipt_number: string } | null
+      }) => ({
+        payment_id: payment.payment_id,
+        description: eventNames.get(payment.fee_type) || "CSSG Membership",
+        amount: Number(payment.amount),
+        status: payment.status,
+        academic_year: payment.academic_year,
+        semester: payment.semester,
+        paid_at: payment.processed_at || "",
+        receipt_number: payment.receipt?.receipt_number || null,
+      })))
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : "Could not load payment history.")
+    } finally {
       setLoading(false)
     }
-    fetchPayments()
+  }
+
+  useEffect(() => {
+    void fetchPayments()
   }, [])
 
   const totalDue = payments
@@ -83,7 +123,9 @@ export default function Payments() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading payments...</div>
+            <LoadingState message="Loading payments..." />
+          ) : error ? (
+            <ErrorState message={error} onRetry={() => void fetchPayments()} />
           ) : payments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -96,29 +138,23 @@ export default function Payments() {
                   <tr className="border-b text-left text-gray-500">
                     <th className="pb-3 font-medium">Description</th>
                     <th className="pb-3 font-medium">Amount</th>
-                    <th className="pb-3 font-medium">Due Date</th>
+                    <th className="pb-3 font-medium">Period</th>
                     <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium"></th>
+                    <th className="pb-3 font-medium">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.map((payment) => (
-                    <tr key={payment.id} className="border-b last:border-0">
+                    <tr key={payment.payment_id} className="border-b last:border-0">
                       <td className="py-3">{payment.description}</td>
-                      <td className="py-3 font-medium">₱{parseFloat(String(payment.amount)).toFixed(2)}</td>
-                      <td className="py-3">{payment.due_date}</td>
+                      <td className="py-3 font-medium">₱{payment.amount.toFixed(2)}</td>
+                      <td className="py-3">{payment.semester} Semester, {payment.academic_year}</td>
                       <td className="py-3">
                         <Badge variant={payment.status === "paid" ? "success" : "warning"}>
                           {payment.status}
                         </Badge>
                       </td>
-                      <td className="py-3">
-                        {payment.status === "paid" && (
-                          <Button variant="ghost" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </td>
+                      <td className="py-3">{payment.receipt_number || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -29,11 +29,13 @@ export default function StudentCountsSection() {
     setLoading(true)
     setError(false)
     try {
-      const res = await fetch("/api/stats.php", { credentials: "include" })
+      const res = await fetch("/student_counts_json.php", { credentials: "include" })
       if (!res.ok) throw new Error("Failed to fetch")
-      const data = await res.json()
+      const data: { total?: number } & Record<string, number | undefined> = await res.json()
       if (data.total !== undefined) setTotalStudents(data.total)
-      if (data.programs) setProgramCounts(data.programs)
+      setProgramCounts(Object.fromEntries(
+        PROGRAMS.map((program) => [program.program, Number(data[program.program] || 0)])
+      ))
     } catch {
       setError(true)
     }

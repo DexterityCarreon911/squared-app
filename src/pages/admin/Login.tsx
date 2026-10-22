@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { api } from "@/services/api"
 import { Eye, EyeOff, Lock, User, Shield, Bolt, ChartLine } from "lucide-react"
 
 export default function AdminLogin() {
@@ -12,25 +13,6 @@ export default function AdminLogin() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [cardHovered, setCardHovered] = useState(false)
-
-  // Check if already logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/admin/php/check_session.php", {
-          credentials: "include",
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.authenticated) {
-            await loginAdmin("", "", "")
-            navigate("/admin/dashboard", { replace: true })
-          }
-        }
-      } catch {}
-    }
-    checkAuth()
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,29 +26,11 @@ export default function AdminLogin() {
     }
 
     try {
-      const formData = new URLSearchParams({
-        username,
-        password,
-        csrf_token: "",
-      })
-      const res = await fetch("/admin/php/login.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        credentials: "include",
-        body: formData,
-      })
-      const data = await res.json()
-      if (data.success) {
-        await loginAdmin(username, password, "")
-        setTimeout(() => {
-          navigate(data.redirect || "/admin/dashboard", { replace: true })
-        }, 800)
-      } else {
-        setError(data.message || "Access denied.")
-        setLoading(false)
-      }
-    } catch {
-      setError("System error. Try again later.")
+      const csrfToken = await api.getCsrfToken()
+      await loginAdmin(username, password, csrfToken)
+      navigate("/admin/dashboard", { replace: true })
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "System error. Try again later.")
       setLoading(false)
     }
   }

@@ -22,6 +22,9 @@ import AttendanceRecord from "@/pages/student/AttendanceRecord"
 import Notifications from "@/pages/student/Notifications"
 import ScanForm from "@/pages/student/ScanForm"
 import GenerateQR from "@/pages/student/GenerateQR"
+import Purchases from "@/pages/student/Purchases"
+import StudentNstpEvaluation from "@/pages/instructor/StudentEvaluation"
+import StudentNstpCertificate from "@/pages/instructor/StudentCertificate"
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard"
@@ -38,15 +41,31 @@ import AdminVotingManagement from "@/pages/admin/VotingManagement"
 import AdminEvaluations from "@/pages/admin/Evaluations"
 import AdminQRQuestManagement from "@/pages/admin/QRQuestManagement"
 import AdminSettings from "@/pages/admin/Settings"
+import AdminPos from "@/pages/admin/Pos"
+import AdminAuroraPayments from "@/pages/admin/AuroraPayments"
+import AdminAuroraCheckin from "@/pages/admin/AuroraCheckin"
+import PrefectRoutes from "@/pages/prefect/PrefectRoutes"
+import InstructorLogin from "@/pages/instructor/Login"
+import InstructorDashboard from "@/pages/instructor/Dashboard"
+import InstructorSubjects from "@/pages/instructor/Subjects"
+import InstructorScanner from "@/pages/instructor/Scanner"
+import InstructorRecords from "@/pages/instructor/Records"
+import InstructorScanners from "@/pages/instructor/Scanners"
+import LoadingState from "@/components/LoadingState"
+import ErrorState from "@/components/ErrorState"
 
 function ProtectedStudent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, authLoading, authError, refreshAuth } = useAuth()
+  if (authLoading) return <LoadingState message="Checking your session..." />
+  if (authError) return <ErrorState message={authError} onRetry={() => void refreshAuth()} />
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 function ProtectedAdmin({ children }: { children: React.ReactNode }) {
-  const { isAdmin } = useAuth()
+  const { isAdmin, authLoading, authError, refreshAuth } = useAuth()
+  if (authLoading) return <LoadingState message="Checking your session..." />
+  if (authError) return <ErrorState message={authError} onRetry={() => void refreshAuth()} />
   if (!isAdmin) return <Navigate to="/admin" replace />
   return <>{children}</>
 }
@@ -65,6 +84,18 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/prefect/*" element={<PrefectRoutes />} />
+      <Route path="/instructor/login" element={<InstructorLogin />} />
+      <Route path="/instructor" element={<InstructorDashboard />} />
+      <Route path="/instructor/subjects" element={<InstructorSubjects />} />
+      <Route path="/instructor/scan" element={<InstructorScanner />} />
+      <Route path="/instructor/attendance" element={<InstructorRecords mode="history" />} />
+      <Route path="/instructor/scanners" element={<InstructorScanners />} />
+      <Route path="/instructor/reports" element={<InstructorRecords mode="reports" />} />
+      <Route path="/instructor/evaluations" element={<InstructorRecords mode="evaluations" />} />
+      <Route path="/instructor/certificates" element={<InstructorRecords mode="certificates" />} />
+      <Route path="/nstp/evaluation" element={<StudentNstpEvaluation />} />
+      <Route path="/nstp/certificate" element={<StudentNstpCertificate />} />
 
       {/* Admin Login */}
       <Route path="/admin" element={<AdminLoginRoute />} />
@@ -180,6 +211,16 @@ function AppRoutes() {
       >
         <Route index element={<Payments />} />
       </Route>
+      <Route
+        path="/student/purchases"
+        element={
+          <ProtectedStudent>
+            <StudentLayout />
+          </ProtectedStudent>
+        }
+      >
+        <Route index element={<Purchases />} />
+      </Route>
 
       {/* Admin Routes (wrapped in AdminLayout) */}
       <Route
@@ -234,6 +275,16 @@ function AppRoutes() {
       </Route>
       <Route
         path="/admin/scanner"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminScanner />} />
+      </Route>
+      <Route
+        path="/admin/qr-scanner"
         element={
           <ProtectedAdmin>
             <AdminLayout />
@@ -313,6 +364,36 @@ function AppRoutes() {
         }
       >
         <Route index element={<AdminSettings />} />
+      </Route>
+      <Route
+        path="/admin/pos"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminPos />} />
+      </Route>
+      <Route
+        path="/admin/aurora-payments"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminAuroraPayments />} />
+      </Route>
+      <Route
+        path="/admin/aurora-checkin"
+        element={
+          <ProtectedAdmin>
+            <AdminLayout />
+          </ProtectedAdmin>
+        }
+      >
+        <Route index element={<AdminAuroraCheckin />} />
       </Route>
 
       {/* 404 */}

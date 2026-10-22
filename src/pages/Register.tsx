@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ChevronLeft, ChevronRight, UserPlus, AlertTriangle, LogIn, Key } from "lucide-react"
+import { api } from "@/services/api"
 
 const programsCourses: Record<string, { label: string; courses: string[] }> = {
   ITE: {
@@ -134,11 +135,12 @@ export default function Register() {
     setLoading(true)
 
     try {
+      const csrfToken = await api.getCsrfToken()
       const res = await fetch("/php/register.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         credentials: "include",
-        body: new URLSearchParams({ ...form, csrf_token: "" }),
+        body: new URLSearchParams({ ...form, csrf_token: csrfToken }),
       })
 
       if (res.redirected) {
@@ -152,8 +154,8 @@ export default function Register() {
         const data = await res.json()
         setError(data.message || "Registration failed.")
       }
-    } catch {
-      setError("Connection error. Please try again.")
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Connection error. Please try again.")
     }
     setLoading(false)
   }

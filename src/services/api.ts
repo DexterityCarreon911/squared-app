@@ -25,6 +25,23 @@ function toForm(body: Record<string, string | number | boolean>) {
 
 export const api = {
   // Auth
+  getCsrfToken: async () => {
+    const res = await request<{ success: boolean; csrf_token?: string; message?: string }>(
+      "/php/api/csrf_token.php"
+    )
+    if (!res.success || !res.csrf_token) {
+      throw new Error(res.message || "Could not obtain a security token")
+    }
+    return res.csrf_token
+  },
+
+  getAuthSession: () =>
+    request<{
+      success: boolean
+      student: { student_id: string } | null
+      admin: { id: number; username: string } | null
+    }>("/php/api/auth_session.php"),
+
   login: (student_id: string, password: string, csrf_token: string) =>
     request<{ status: string; message: string }>("/php/login.php", {
       method: "POST",

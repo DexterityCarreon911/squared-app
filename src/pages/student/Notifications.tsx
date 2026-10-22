@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, CheckCheck, Calendar, Megaphone, Info, CreditCard, Trash2 } from "lucide-react"
+import { Bell, CheckCheck, Calendar, Megaphone, Info, CreditCard } from "lucide-react"
 import LoadingState from "@/components/LoadingState"
 import EmptyState from "@/components/EmptyState"
 
@@ -11,8 +11,8 @@ interface Notification {
   type: "event" | "announcement" | "payment" | "info"
   title: string
   message: string
-  created_at: string
-  read: boolean
+  time_ago: string
+  is_read: boolean
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -32,39 +32,49 @@ const typeColors: Record<string, string> = {
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/php/notifications.php", { credentials: "include" })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.status === "success" && data.notifications) {
-            setNotifications(data.notifications)
-          }
+        const res = await fetch("/php/get_notifications.php", { credentials: "include" })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Could not load notifications.")
         }
-      } catch {
-        // Use sample data on failure
-        setNotifications([
-          { id: 1, type: "event", title: "New Event: Sports Fest 2026", message: "Registration is now open for the annual sports festival.", created_at: new Date().toISOString(), read: false },
-          { id: 2, type: "announcement", title: "System Maintenance", message: "The system will be down for maintenance on Saturday.", created_at: new Date(Date.now() - 86400000).toISOString(), read: false },
-          { id: 3, type: "payment", title: "Payment Confirmed", message: "Your CSSG membership fee payment was successful.", created_at: new Date(Date.now() - 172800000).toISOString(), read: true },
-        ])
+        setNotifications(data.notifications || [])
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Could not load notifications.")
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
-    fetchNotifications()
+    void fetchNotifications()
   }, [])
 
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  const markRead = async (id?: number) => {
+    setError("")
+    try {
+      const body = new URLSearchParams(id ? { id: String(id) } : { all: "1" })
+      const res = await fetch("/php/mark_notification_read.php", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Could not update notifications.")
+      }
+      setNotifications((prev) => prev.map((n) =>
+        id === undefined || n.id === id ? { ...n, is_read: true } : n
+      ))
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Could not update notifications.")
+    }
   }
 
-  const dismissNotification = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-  }
-
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const unreadCount = notifications.filter((n) => !n.is_read).length
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -76,7 +86,7 @@ export default function Notifications() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllRead}>
+        <Button variant="outline" size="sm" onClick={() => void markRead()}>
             <CheckCheck className="w-4 h-4 mr-1" /> Mark All Read
           </Button>
         )}
@@ -84,6 +94,8 @@ export default function Notifications() {
 
       {loading ? (
         <LoadingState />
+      ) : error && notifications.length === 0 ? (
+        <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={<Bell className="w-8 h-8 text-gray-400" />}
@@ -97,7 +109,7 @@ export default function Notifications() {
             return (
               <Card
                 key={notif.id}
-                className={`transition-all hover:shadow-md ${!notif.read ? "border-l-4 border-l-[#187C19] bg-green-50/30" : ""}`}
+                className={`transition-all hover:shadow-md ${!notif.is_read ? "border-l-4 border-l-[#187C19] bg-green-50/30" : ""}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -110,24 +122,22 @@ export default function Notifications() {
                           <p className="font-semibold text-sm text-gray-900">{notif.title}</p>
                           <p className="text-sm text-gray-500 mt-0.5">{notif.message}</p>
                         </div>
-                        <button
-                          onClick={() => dismissNotification(notif.id)}
-                          className="shrink-0 text-gray-400 hover:text-red-500 transition-colors"
-                          title="Dismiss"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!notif.is_read && (
+                          <button
+                            onClick={() => void markRead(notif.id)}
+                            className="shrink-0 text-gray-400 hover:text-[#187C19] transition-colors"
+                            title="Mark as read"
+                            aria-label={`Mark ${notif.title} as read`}
+                          >
+                            <CheckCheck className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-gray-400">
-                          {new Date(notif.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                          {notif.time_ago}
                         </span>
-                        {!notif.read && (
+                        {!notif.is_read && (
                           <Badge variant="default" className="text-[0.6rem] h-4 px-1.5 bg-[#187C19]">New</Badge>
                         )}
                       </div>
@@ -138,6 +148,9 @@ export default function Notifications() {
             )
           })}
         </div>
+      )}
+      {error && notifications.length > 0 && (
+        <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
       )}
     </div>
   )

@@ -13,7 +13,7 @@ import AnnouncementSection from "@/pages/landing/AnnouncementSection"
 import BackToTop from "@/components/BackToTop"
 import PwaInstallHandler from "@/components/PwaInstallHandler"
 import DarkModeStyles from "@/components/DarkModeStyles"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import LandingModals from "@/pages/landing/LandingModals"
 
@@ -25,9 +25,26 @@ export default function Landing() {
   const [showMessage, setShowMessage] = useState(false)
   const [showAccountExists, setShowAccountExists] = useState(false)
   const [showInstall, setShowInstall] = useState(false)
+  const [installApp, setInstallApp] = useState<(() => Promise<void>) | null>(null)
   const [messageType, setMessageType] = useState<"success" | "error" | "warning">("success")
   const [messageText, setMessageText] = useState("")
   const [accountEmail, setAccountEmail] = useState("")
+
+  const handleShowInstall = useCallback((install: () => Promise<void>) => {
+    setInstallApp(() => install)
+    setShowInstall(true)
+  }, [])
+
+  const handleInstall = useCallback(async () => {
+    try {
+      await installApp?.()
+      setShowInstall(false)
+    } catch (error) {
+      setMessageType("error")
+      setMessageText(error instanceof Error ? error.message : "Could not install the app.")
+      setShowMessage(true)
+    }
+  }, [installApp])
 
   // URL parameter modal handling
   useEffect(() => {
@@ -95,12 +112,13 @@ export default function Landing() {
         onCloseMessage={() => setShowMessage(false)}
         onCloseAccountExists={() => setShowAccountExists(false)}
         onCloseInstall={() => setShowInstall(false)}
+        onInstall={handleInstall}
         onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true) }}
         onSwitchToLogin={() => { setShowRegister(false); setShowLogin(true) }}
       />
 
       {/* PWA Install Prompt */}
-      <PwaInstallHandler onShowInstall={() => setShowInstall(true)} />
+      <PwaInstallHandler onShowInstall={handleShowInstall} />
 
       {/* Dark Mode Styles — injected via ref to avoid TSX parser conflicts with CSS curly braces */}
       <DarkModeStyles />

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Squared QR</string>
+    <string name="title_activity_main">Squared QR</string>
+    <string name="package_name">com.squared.qr</string>
+    <string name="custom_url_scheme">com.squared.qr</string>
+</resources>

@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Download, Calendar, Clock, CheckCircle, XCircle, Filter } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Search, Download, Calendar, Clock, CheckCircle, XCircle, ClipboardCheck, Award } from "lucide-react"
 import LoadingState from "@/components/LoadingState"
 import EmptyState from "@/components/EmptyState"
 import ErrorState from "@/components/ErrorState"
@@ -15,8 +16,21 @@ interface AttendanceRecord {
   status: string
 }
 
+interface NstpAttendanceRecord {
+  id: number
+  session_date: string
+  time_in: string | null
+  time_out: string | null
+  subject_code: string
+  subject_name: string
+  evaluation_status: string
+  evaluated_at: string | null
+  certificate_issued_at: string | null
+}
+
 export default function AttendanceRecord() {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [nstpRecords, setNstpRecords] = useState<NstpAttendanceRecord[]>([])
   const [filtered, setFiltered] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -27,13 +41,15 @@ export default function AttendanceRecord() {
     setLoading(true)
     setError(false)
     try {
-      const res = await fetch("/php/get_attendance.php", { credentials: "include" })
+      const res = await fetch("/php/api/my_attendance.php", { credentials: "include" })
       if (!res.ok) throw new Error("Failed")
       const data = await res.json()
-      if (data.status === "success" && data.attendance) {
-        setRecords(data.attendance)
-        setFiltered(data.attendance)
+      if (data.status !== "success" || !Array.isArray(data.attendance) || !Array.isArray(data.nstp_attendance)) {
+        throw new Error(data.message || "Could not load attendance records.")
       }
+      setRecords(data.attendance)
+      setFiltered(data.attendance)
+      setNstpRecords(data.nstp_attendance)
     } catch {
       setError(true)
     }
@@ -149,43 +165,76 @@ export default function AttendanceRecord() {
         <LoadingState />
       ) : error ? (
         <ErrorState onRetry={fetchRecords} />
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && nstpRecords.length === 0 ? (
         <EmptyState title="No records found" message={search ? "Try a different search term." : "No attendance records yet."} />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50 text-left">
-                    <th className="p-4 font-medium text-gray-500">Event</th>
-                    <th className="p-4 font-medium text-gray-500">Date</th>
-                    <th className="p-4 font-medium text-gray-500">Time In</th>
-                    <th className="p-4 font-medium text-gray-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((record, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="p-4 font-medium">{record.event_name}</td>
-                      <td className="p-4 text-gray-600">{record.event_date}</td>
-                      <td className="p-4 text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {record.time_in || "—"}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant={record.status === "Present" ? "success" : "destructive"}>
-                          {record.status}
-                        </Badge>
-                      </td>
+        <>
+          {filtered.length > 0 && <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-gray-50 text-left">
+                      <th className="p-4 font-medium text-gray-500">Event</th>
+                      <th className="p-4 font-medium text-gray-500">Date</th>
+                      <th className="p-4 font-medium text-gray-500">Time In</th>
+                      <th className="p-4 font-medium text-gray-500">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {filtered.map((record, i) => (
+                      <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                        <td className="p-4 font-medium">{record.event_name}</td>
+                        <td className="p-4 text-gray-600">{record.event_date}</td>
+                        <td className="p-4 text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {record.time_in || "—"}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <Badge variant={record.status === "Present" ? "success" : "destructive"}>
+                            {record.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>}
+
+          {nstpRecords.length > 0 && <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">NSTP Attendance & Evaluations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {nstpRecords.map((record) => {
+                const pending = record.evaluation_status === "pending"
+                return <div key={record.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold">{record.subject_name || record.subject_code}</p>
+                      <Badge variant={pending ? "warning" : "success"}>{pending ? "Pending evaluation" : "Confirmed"}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {record.session_date} · In {record.time_in || "—"} · Out {record.time_out || "—"}
+                    </p>
+                  </div>
+                  {pending ? (
+                    <Button asChild size="sm">
+                      <Link to={`/nstp/evaluation?att_id=${record.id}`}><ClipboardCheck className="mr-2 h-4 w-4" />Complete evaluation</Link>
+                    </Button>
+                  ) : record.certificate_issued_at ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`/nstp/certificate?att_id=${record.id}`}><Award className="mr-2 h-4 w-4" />View certificate</Link>
+                    </Button>
+                  ) : null}
+                </div>
+              })}
+            </CardContent>
+          </Card>}
+        </>
       )}
     </div>
   )

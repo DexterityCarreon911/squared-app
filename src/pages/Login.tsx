@@ -1,9 +1,12 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { LogIn, Eye, EyeOff, CheckCircle, AlertCircle, UserCheck } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { api } from "@/services/api"
 
 export default function Login() {
   const navigate = useNavigate()
+  const { loginStudent } = useAuth()
   const [searchParams] = useSearchParams()
   const [studentId, setStudentId] = useState("")
   const [password, setPassword] = useState("")
@@ -28,24 +31,11 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch("/php/login.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        credentials: "include",
-        body: new URLSearchParams({
-          student_id: studentId,
-          password: password,
-          csrf_token: "",
-        }),
-      })
-      const data = await response.json()
-      if (data.status === "success") {
-        navigate("/home")
-      } else {
-        setError(data.message || "Invalid credentials.")
-      }
-    } catch {
-      setError("Connection error. Please try again.")
+      const csrfToken = await api.getCsrfToken()
+      await loginStudent(studentId, password, csrfToken)
+      navigate("/home")
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Connection error. Please try again.")
     }
     setLoading(false)
   }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Mail, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react"
+import { api } from "@/services/api"
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("")
@@ -17,19 +18,21 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
-      const res = await fetch("/php/forgot_password.php", {
+      const csrfToken = await api.getCsrfToken()
+      const res = await fetch("/php/send_password_reset.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ email, csrf_token: "" }),
+        credentials: "include",
+        body: new URLSearchParams({ email, csrf_token: csrfToken }),
       })
       const data = await res.json()
-      if (data.status === "success") {
+      if (data.success) {
         setSuccess(true)
       } else {
         setError(data.message || "Failed to send reset link.")
       }
-    } catch {
-      setError("Connection error. Please try again.")
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Connection error. Please try again.")
     }
     setLoading(false)
   }

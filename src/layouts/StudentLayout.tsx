@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Menu, X, LogOut, User,
   QrCode, ClipboardList, Bell, Scan, CreditCard, MessageSquare,
   Vote, Gamepad2, Settings, Moon, Sun,
+  ShoppingBag,
 } from "lucide-react"
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
   { label: "Attendance Record", href: "/attendance-record", icon: ClipboardList },
   { label: "Attendance", href: "/attendance", icon: User },
   { label: "Payments", href: "/payments", icon: CreditCard },
+  { label: "Purchase History", href: "/student/purchases", icon: ShoppingBag },
   { label: "QR Quest", href: "/qr-quest", icon: Gamepad2 },
   { label: "Confessions", href: "/confessions", icon: MessageSquare },
   { label: "Voting", href: "/voting", icon: Vote },

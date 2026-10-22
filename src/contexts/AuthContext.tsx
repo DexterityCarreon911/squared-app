@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
 import { api } from "@/services/api"
 
 interface StudentUser {
@@ -19,6 +19,9 @@ interface AuthContextType {
   logoutAdmin: () => void
   isAuthenticated: boolean
   isAdmin: boolean
+  authLoading: boolean
+  authError: string
+  refreshAuth: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -26,32 +29,55 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [student, setStudent] = useState<StudentUser | null>(null)
   const [admin, setAdmin] = useState<AdminUser | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [authError, setAuthError] = useState("")
+
+  const refreshAuth = useCallback(async () => {
+    setAuthLoading(true)
+    setAuthError("")
+    try {
+      const session = await api.getAuthSession()
+      if (!session.success) throw new Error("Could not verify the current session")
+      setStudent(session.student)
+      setAdmin(session.admin)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Could not verify the current session")
+    } finally {
+      setAuthLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void refreshAuth()
+  }, [refreshAuth])
 
   const loginStudent = useCallback(async (id: string, password: string, csrf: string) => {
     const res = await api.login(id, password, csrf)
     if (res.status === "success") {
-      setStudent({ student_id: id })
+      await refreshAuth()
     } else {
       throw new Error(res.message)
     }
-  }, [])
+  }, [refreshAuth])
 
   const loginAdmin = useCallback(async (username: string, password: string, csrf: string) => {
     const res = await api.adminLogin(username, password, csrf)
     if (res.success) {
-      setAdmin({ id: 1, username })
+      await refreshAuth()
     } else {
       throw new Error(res.message)
     }
-  }, [])
+  }, [refreshAuth])
 
   const logoutStudent = useCallback(async () => {
-    await fetch("/php/logout.php", { credentials: "include" })
+    const response = await fetch("/php/logout.php", { credentials: "include" })
+    if (!response.ok) throw new Error("Could not sign out")
     setStudent(null)
   }, [])
 
   const logoutAdmin = useCallback(async () => {
-    await fetch("/admin/php/logout.php", { credentials: "include" })
+    const response = await fetch("/admin/php/logout.php", { credentials: "include" })
+    if (!response.ok) throw new Error("Could not sign out")
     setAdmin(null)
   }, [])
 
@@ -66,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logoutAdmin,
         isAuthenticated: student !== null,
         isAdmin: admin !== null,
+        authLoading,
+        authError,
+        refreshAuth,
       }}
     >
       {children}

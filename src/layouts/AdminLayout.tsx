@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, Megaphone, MessageSquare,
   Menu, X, LogOut, CreditCard, Sliders, BarChart3, Vote,
   ClipboardList, Gamepad2, Settings, ChevronLeft, QrCode,
+  Store, Sparkles,
 } from "lucide-react"
 
 const navItems = [
@@ -15,6 +16,9 @@ const navItems = [
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
   { label: "Voting", href: "/admin/voting", icon: Vote },
   { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "POS", href: "/admin/pos", icon: Store },
+  { label: "Aurora Payments", href: "/admin/aurora-payments", icon: Sparkles },
+  { label: "Aurora Check-in", href: "/admin/aurora-checkin", icon: QrCode },
   { label: "Slider", href: "/admin/slider", icon: Sliders },
   { label: "Evaluations", href: "/admin/evaluations", icon: ClipboardList },
   { label: "QR Quest", href: "/admin/qr-quest", icon: Gamepad2 },

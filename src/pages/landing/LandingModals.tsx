@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { X, Eye, EyeOff, AlertTriangle, CheckCircle, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { api } from "@/services/api"
 
 /* ────────────────────────────────────────────
    Login Modal
@@ -24,6 +25,7 @@ function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProps) {
     setMessage("")
     setLoading(true)
     try {
+      const csrfToken = await api.getCsrfToken()
       const res = await fetch("/php/login.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -31,7 +33,7 @@ function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProps) {
         body: new URLSearchParams({
           student_id: studentId,
           password,
-          csrf_token: "",
+          csrf_token: csrfToken,
         }),
       })
       const data = await res.json()
@@ -40,8 +42,8 @@ function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProps) {
       } else {
         setMessage(data.message || "Login failed.")
       }
-    } catch {
-      setMessage("Connection error. Please try again.")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Connection error. Please try again.")
     }
     setLoading(false)
   }
@@ -444,9 +446,10 @@ function AccountExistsModal({ open, onClose, email }: AccountExistsModalProps) {
 interface InstallModalProps {
   open: boolean
   onClose: () => void
+  onInstall: () => void
 }
 
-function InstallModal({ open, onClose }: InstallModalProps) {
+function InstallModal({ open, onClose, onInstall }: InstallModalProps) {
   if (!open) return null
 
   return (
@@ -462,7 +465,7 @@ function InstallModal({ open, onClose }: InstallModalProps) {
         </div>
         <div className="px-6 pb-6 flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1">Not Now</Button>
-          <Button className="flex-1">Install App</Button>
+          <Button className="flex-1" onClick={onInstall}>Install App</Button>
         </div>
       </div>
     </div>
@@ -486,6 +489,7 @@ interface LandingModalsProps {
   onCloseMessage: () => void
   onCloseAccountExists: () => void
   onCloseInstall: () => void
+  onInstall: () => void
   onSwitchToRegister: () => void
   onSwitchToLogin: () => void
 }
@@ -493,7 +497,7 @@ interface LandingModalsProps {
 export default function LandingModals({
   showLogin, showRegister, showMessage, showAccountExists, showInstall,
   messageType, messageText, accountEmail,
-  onCloseLogin, onCloseRegister, onCloseMessage, onCloseAccountExists, onCloseInstall,
+  onCloseLogin, onCloseRegister, onCloseMessage, onCloseAccountExists, onCloseInstall, onInstall,
   onSwitchToRegister, onSwitchToLogin,
 }: LandingModalsProps) {
   return (
@@ -502,7 +506,7 @@ export default function LandingModals({
       <RegisterModal open={showRegister} onClose={onCloseRegister} onSwitchToLogin={onSwitchToLogin} />
       <MessageModal open={showMessage} onClose={onCloseMessage} type={messageType} message={messageText} />
       <AccountExistsModal open={showAccountExists} onClose={onCloseAccountExists} email={accountEmail} />
-      <InstallModal open={showInstall} onClose={onCloseInstall} />
+      <InstallModal open={showInstall} onClose={onCloseInstall} onInstall={onInstall} />
     </>
   )
 }
