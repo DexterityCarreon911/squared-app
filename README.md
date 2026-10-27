@@ -1,12 +1,12 @@
 # Squared Enterprise
 
-React/Vite frontend for Squared, backed by the existing same-origin PHP application.
+Squared Enterprise includes the existing React/Vite web frontend and an Expo/React Native Android app in `mobile/`. Both target the existing PHP backend.
 
 ## Requirements
 
 - Node.js 20.19+ (Node.js 22+ recommended)
 - npm
-- Android Studio with an Android SDK to build Android packages
+- An Expo account for cloud Android builds
 - PHP backend and database deployed alongside the frontend
 
 ## Web production build
@@ -41,67 +41,108 @@ php prefect_admin/cli/provision_admin.php prefect-admin "Prefect Administrator"
 unset PREFECT_ADMIN_PASSWORD
 ```
 
-## Android APK (hosted web app)
+## Native Android app (Expo / React Native)
 
-The Android app is a Capacitor wrapper that opens the hosted Enterprise site.
-This keeps the legacy PHP session and API paths same-origin and avoids bundling
-PHP in the APK. The app requires an internet connection; publish the Enterprise
-frontend and PHP backend at the configured origin before distributing an APK.
+The native app lives in `mobile/` and is built with Expo and React Native. It
+uses EAS Build to produce APKs in the cloud, so Android Studio and a local
+Android SDK are not required. The native app calls the PHP API at
+`https://squared-qr.online` by default; set `EXPO_PUBLIC_API_URL` to use another
+HTTPS backend.
 
-The production URL and Android application ID are configured in
-`capacitor.config.ts`. The current values are `https://squared-qr.online/` and
-`com.squared.qr`. Finalize the application ID before publishing; changing it
-later creates a different Android app. The APK task checks for the Enterprise
-deployment marker at the configured URL and stops if the URL still serves the
-legacy site or an error page.
-
-1. Install Android Studio and its Android SDK. Set `ANDROID_HOME` (or
-   `ANDROID_SDK_ROOT`) if the SDK is not in its default location.
-2. Install project dependencies and generate the Android project:
-
-   ```sh
-   npm ci
-   npm run android:add
-   ```
-
-   Run `npm run android:add` only once. The generated `android/` project should
-   be kept in version control.
-3. Build and synchronize the frontend and native project:
-
-   ```sh
-   npm run android:sync
-   ```
-
-4. Open Android Studio:
-
-   ```sh
-   npm run android:open
-   ```
-
-   In Android Studio, use **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-   The debug APK is output under `android/app/build/outputs/apk/debug/`.
-
-On Windows, after Android Studio/SDK setup, the debug build can also be run with:
+The Android application ID is `com.squared.qr`. Choose the final ID before
+publishing; changing it later creates a separate Android app.
 
 ```sh
-npm run android:apk:debug
+cd mobile
+npm ci
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npm run build:apk
 ```
 
-Before an APK build, deploy the production frontend and verify it with
-`npm run check:production`. To build against a separate HTTPS staging site,
-set `CAPACITOR_SERVER_URL` for both the check and Capacitor commands.
+The first build may ask you to create or link an EAS project and configure
+Android signing credentials. The `preview` profile produces an installable APK.
+For Play Store distribution, run `npm run build:aab` to create an Android App
+Bundle. Keep signing credentials private and never commit them.
 
-For a store release, use Android Studio's signed APK/AAB flow with a private
-release keystore. Back up the keystore securely and never commit it. Install and
-test the signed release on physical devices before distribution. Debug APKs are
-for testing only.
+Run `npm start` in `mobile/` to launch Expo for development. A physical device
+or Android emulator is needed to validate camera scanning, PHP session
+persistence, and device-specific behavior.
+
+The native conversion is in progress. The React Native app currently includes
+a public welcome page with a rotating hero, live student counts, academic
+programs, live announcements, and upcoming activities; student registration
+and password reset, dashboard, attendance entry and history, QR
+card and QR Quest, generic QR generation, NSTP evaluation and certificate
+viewing/sharing/PDF export, notifications, confessions, voting, payment and
+purchase history, password changes, support requests, and account sign-out.
+Instructor sign-in, subjects, attendance scanning, student scanner
+permissions, attendance history, filtered attendance reports with CSV export,
+evaluations, and certificates are also available natively. Prefect sign-in,
+incident search/filing/detail and case actions, student discipline records,
+violation catalog management, and filtered discipline reports are also
+available. Admin sign-in, dashboard with expandable program/course enrollment,
+searchable/sortable student views and event create/edit/delete/status
+management, announcement and PCA voting management, event evaluation form
+builder, payment configuration, POS sales/receipts, and Aurora payment/check-in
+workflows are available natively. Administrator workflows also include direct
+PCA nominee image uploads, welcome-slider image management, QR Quest
+registration/settings management with a confirmed clear-all operation, event
+attendance scanning, scanner authorization, NSTP subject management,
+payable-event configuration, payment
+scanning, evaluation response review, student record actions, and Aurora
+check-in reporting. Event attendance reporting includes status filters,
+student search, pagination, and a full confirmed-attendance CSV export.
+Aurora check-in reporting includes search, date filters, pagination, and a full
+filtered CSV export. Filtered payment transaction history with full filtered
+CSV export is also available from the administrator navigation.
+Keep using the web app for workflows that still lack a functioning native
+counterpart or a verified backend contract.
+
+Native confession moderation and support replies use the JSON API contracts
+in `squared-old/confession/admin.php` and
+`squared-old/admin/php/support_api.php`; native support management includes
+status filters, per-status counts, and status updates. Deploy those backend
+files with the mobile app before using these administrator screens. Student
+payment records are read from the existing membership payment tables through
+`squared-old/admin/php/payments_api.php`. The web payment-creation control is
+not functional and its displayed due-date fields do not exist in the checked-in
+payment schema, so the native screen does not claim to create or modify fees.
+Native event management uses `squared-old/admin/php/mobile_events_api.php`;
+native PCA voting management uses
+`squared-old/admin/php/mobile_voting_api.php`; membership and Aurora
+configuration use `squared-old/admin/php/mobile_payment_settings_api.php`.
+Evaluation form management uses
+`squared-old/admin/php/mobile_evaluation_fields_api.php`; slider management
+uses `squared-old/admin/php/mobile_slider_api.php`; QR Quest administration
+uses `squared-old/admin/php/mobile_qr_quest_api.php`. PCA nominee image uploads
+are handled by `squared-old/admin/php/mobile_voting_api.php`. Deploy these
+endpoints with the mobile app. Administrator event scans use
+`squared-old/admin/php/mobile_events_api.php` and require applying
+`squared-old/admin/php/migrations/20261023_admin_event_scanner.sql` before
+deploying the updated endpoint. Admin scans are recorded as pending until the
+student completes the event evaluation.
+
+The React web prototype's slider, QR Quest-management, evaluation-management,
+and generic settings screens are still static/demo interactions. Native
+evaluation, payment, slider, and QR Quest settings now use their corresponding
+legacy PHP data contracts. New administrator tools use
+`squared-old/admin/php/mobile_admin_tools_api.php`,
+`mobile_student_management_api.php`, `mobile_evaluation_responses_api.php`,
+and `mobile_aurora_report_api.php`; deploy them with the native app. Payment
+processing and student lookup use the existing `/php` payment endpoints.
+Payment transaction exports use `/php/export_transactions.php`, which now
+accepts the same student search filter as the native report.
+Event attendance reports and confirmed-attendee exports use the
+`squared-old/admin/php/mobile_events_api.php` contract.
+Aurora check-in report exports use
+`squared-old/admin/php/mobile_aurora_report_api.php`.
 
 ## Notes
 
-- QR camera access requires HTTPS, browser/WebView support, and granted camera
-  permission. Screens include manual student-ID entry as a fallback.
-- The APK is a web wrapper, not an offline native rewrite. PHP-backed workflows
-  require the production server to be available.
+- PHP-backed workflows require network access to the production server.
+- QR scanning uses the native camera and requires the user to grant camera
+  permission.
 - Ensure a privacy policy is published and complete store data-safety
   disclosures before Play Store submission.
 - Test login/session persistence, registration, payments, receipts, attendance,

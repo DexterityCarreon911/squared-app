@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Squared",
+    "slug": "squared-enterprise",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/squared-logo.png",
+    "scheme": "squared",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.squared.qr",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#187C19",
+        "foregroundImage": "./assets/images/squared-logo.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "server",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/squared-logo.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#187C19"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Squared to scan attendance and quest QR codes.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "ac64d9d1-241c-435b-b43c-7555d9ed7081"
+      }
+    },
+    "owner": "dexterity911"
+  }
+}
